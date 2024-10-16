@@ -36,7 +36,12 @@ struct optional_tag
     { return std::nullopt; }
 };
 
-template<typename Tag, typename T> struct arg { T v; };
+template<typename Tag, typename T>
+struct arg
+{
+    using tag = Tag;
+    T v;
+};
 
 template<typename Tag>
 struct named_arg
@@ -82,22 +87,28 @@ constexpr impl::optional_tag optional = {};
     namespace named_args::impl::tags { struct NAME {}; }    \
     namespace named_args::names { constexpr impl::named_arg<impl::tags::NAME> NAME = {}; }
 
-#define named_arg_list_IMPL(TYPE, NAME, DEFAULT)                                                            \
-    using NAME##_t = std::conditional_t<std::is_same_v<std::decay_t<decltype(DEFAULT)>,                     \
-                                                       ::named_args::impl::optional_tag>,                   \
-                                        std::optional<TYPE>, TYPE>;                                         \
-    {                                                                                                       \
-        using NAME##_arg_t                                                                                  \
-            = decltype(::named_args::impl::get_arg<::named_args::impl::tags::NAME>(DEFAULT, args...));      \
-                                                                                                            \
-        constexpr bool missing_required = !std::is_same_v<NAME##_arg_t, ::named_args::impl::optional_tag>   \
-                                        && std::is_same_v<NAME##_arg_t, ::named_args::impl::required_tag>;  \
-        static_assert(!missing_required, "missing required arg: '" #NAME "'");                              \
-                                                                                                            \
-        constexpr bool can_impl_conv = std::is_same_v<NAME##_arg_t, ::named_args::impl::optional_tag>       \
-                                    || std::is_convertible_v<NAME##_arg_t, NAME##_t>;                       \
-        static_assert(can_impl_conv, "cannot convert the type of arg '" #NAME "' to '" #TYPE "'");          \
-    }                                                                                                       \
+#define named_arg_list_IMPL(TYPE, NAME, DEFAULT)                                                                    \
+    using NAME##_t = std::conditional_t<                                                                            \
+            std::is_same_v<std::decay_t<decltype(DEFAULT)>, ::named_args::impl::optional_tag>,                      \
+            std::optional<TYPE>,                                                                                    \
+            TYPE>;                                                                                                  \
+    {                                                                                                               \
+        using namespace named_args;                                                                                 \
+        using namespace named_args::impl;                                                                           \
+                                                                                                                    \
+        using NAME##_arg_t = decltype(get_arg<tags::NAME>(DEFAULT, args...));                                       \
+                                                                                                                    \
+        constexpr bool is_optional = std::is_same_v<std::decay_t<decltype(DEFAULT)>, optional_tag>;                 \
+        constexpr bool is_required = std::is_same_v<std::decay_t<decltype(DEFAULT)>, required_tag>;                 \
+                                                                                                                    \
+        constexpr bool has_arg = (std::is_same_v<typename std::decay_t<decltype(args)>::tag, tags::NAME> || ...);   \
+        constexpr bool can_impl_conv = std::is_convertible_v<NAME##_arg_t, NAME##_t>;                               \
+                                                                                                                    \
+        if constexpr (is_required && !has_arg)                                                                      \
+            static_assert(false, "missing required arg: '" #NAME "'");                                              \
+        else if constexpr (!can_impl_conv)                                                                          \
+            static_assert(false, "cannot convert the type of arg '" #NAME "' to '" #TYPE "'");                      \
+    }                                                                                                               \
     NAME##_t NAME = ::named_args::impl::get_arg<::named_args::impl::tags::NAME>(DEFAULT, args...);
 
 #define named_arg_list(...) NAMED_ARG_MAP3(named_arg_list_IMPL, __VA_ARGS__)
