@@ -29,7 +29,12 @@ namespace named_args {
 namespace impl {
 
 struct required_tag {};
-struct optional_tag {};
+struct optional_tag
+{
+    template<typename T>
+    constexpr operator std::optional<T>() const
+    { return std::nullopt; }
+};
 
 template<typename Tag, typename T> struct arg { T v; };
 
@@ -47,14 +52,7 @@ struct named_arg
     }
 };
 
-template<typename Tag, typename T>
-constexpr auto get_arg_impl(const T& default_)
-{
-    if constexpr (std::is_same_v<T, optional_tag>)
-        return std::nullopt;
-    else
-        return default_;
-}
+template<typename Tag, typename T> constexpr auto get_arg_impl(const T& default_) { return default_; }
 
 template<typename Tag, typename T, typename Tag0, typename T0, typename ...TagN, typename ...TN>
 constexpr auto get_arg_impl(const T& default_, const arg<Tag0, T0>& arg0, const arg<TagN, TN>& ... argn)
