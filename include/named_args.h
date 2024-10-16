@@ -87,7 +87,9 @@ constexpr impl::optional_tag optional = {};
     namespace named_args::impl::tags { struct NAME {}; }    \
     namespace named_args::names { constexpr impl::named_arg<impl::tags::NAME> NAME = {}; }
 
-#define named_arg_list_IMPL(TYPE, NAME, DEFAULT)                                                                    \
+#define named_arg_list_IMPL1(_0, NAME, _1) || std::is_same_v<typename std::decay_t<decltype(args)>::tag, named_args::impl::tags::NAME>
+
+#define named_arg_list_IMPL2(TYPE, NAME, DEFAULT)                                                                    \
     using NAME##_t = std::conditional_t<                                                                            \
             std::is_same_v<std::decay_t<decltype(DEFAULT)>, ::named_args::impl::optional_tag>,                      \
             std::optional<TYPE>,                                                                                    \
@@ -111,6 +113,11 @@ constexpr impl::optional_tag optional = {};
     }                                                                                                               \
     NAME##_t NAME = ::named_args::impl::get_arg<::named_args::impl::tags::NAME>(DEFAULT, args...);
 
-#define named_arg_list(...) NAMED_ARG_MAP3(named_arg_list_IMPL, __VA_ARGS__)
+#define named_arg_list(...)                                                                                         \
+    {                                                                                                               \
+        constexpr bool no_extra_arg = (true && ... && (false NAMED_ARG_MAP3(named_arg_list_IMPL1, __VA_ARGS__)));   \
+        static_assert(no_extra_arg, "additional arg in the input.");                                                \
+    }                                                                                                               \
+    NAMED_ARG_MAP3(named_arg_list_IMPL2, __VA_ARGS__)
 
 #endif // !NAMED_ARGS_H

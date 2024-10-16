@@ -12,6 +12,7 @@ Declare a name by `named_arg`:
 named_arg(a)
 named_arg(b)
 named_arg(c)
+named_arg(d)
 ```
 
 Declare named parameters by `named_arg_list`. The method must have a parameter pack called `args`:
@@ -62,6 +63,7 @@ int main()
     using named_args::names::a;
     using named_args::names::b;
     using named_args::names::c;
+    using named_args::names::d;
 
     int val = 0;
 
@@ -74,6 +76,9 @@ int main()
 
     // foo(a=val, c=new int);
     // ^ static assertion failed: cannot convert the type of arg 'c' to 'int'.
+
+    // foo(a=val, b=4, c=5, d=6);
+    // ^ static assertion failed: additional arg in the input.
 
     std::cout << "val: " << val << std::endl;
 
