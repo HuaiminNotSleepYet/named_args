@@ -95,3 +95,8 @@ a: 1 b: 4 c: 5
 a: 2 b: _ c: 0
 val: 3
 ```
+
+## Related
+
+- [Strong types for strong interfaces](https://www.fluentcpp.com/2016/12/08/strong-types-for-strong-interfaces/)
+- [NamedType](https://github.com/joboccara/NamedType): Implementation of strong types in C++ 

@@ -89,7 +89,7 @@ constexpr impl::optional_tag optional = {};
 
 #define named_arg_list_IMPL1(_0, NAME, _1) || std::is_same_v<typename std::decay_t<decltype(args)>::tag, named_args::impl::tags::NAME>
 
-#define named_arg_list_IMPL2(TYPE, NAME, DEFAULT)                                                                    \
+#define named_arg_list_IMPL2(TYPE, NAME, DEFAULT)                                                                   \
     using NAME##_t = std::conditional_t<                                                                            \
             std::is_same_v<std::decay_t<decltype(DEFAULT)>, ::named_args::impl::optional_tag>,                      \
             std::optional<TYPE>,                                                                                    \
